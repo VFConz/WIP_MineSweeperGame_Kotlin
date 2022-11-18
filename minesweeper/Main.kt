@@ -7,7 +7,8 @@ class Map(mines:Int)
     private val mineCount = mines
     private val minePositions = MutableList<Int>(mineCount) {0}
 
-    val map: MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'.'} }
+    val map: MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'/'} }
+    var init: Boolean = true
 
     init {
         var iter = 0
@@ -24,14 +25,16 @@ class Map(mines:Int)
             minePositions[iter++] = coord
             lastA = posA
             lastB = posB
-            }
-            minePositions.forEach()
-            {
-                var a = it/10
-                var b = it%10
-                getProximity(map, a, b)
-            }
         }
+        minePositions.forEach()
+        {
+            var a = it/10
+            var b = it%10
+            getProximity(map, a, b)
+        }
+
+        init = false
+    }
 
 
     fun printMap()
@@ -74,12 +77,15 @@ class Map(mines:Int)
         println(minePositions.toString())
         val target = (x*10)+y
         println("Target: $target")
+
+        if(init)
+        {
             if(!minePositions.contains(target))
             {
-                if (a[x][y] == '.' && !minePositions.contains(target))
-            {
-                return '1'
-            }
+                if (a[x][y] == '/' && !minePositions.contains(target))
+                {
+                    return '1'
+                }
                 else if (a[x][y].isDigit()) {
                     var f = a[x][y].digitToInt()
                     f+= 1
@@ -91,87 +97,75 @@ class Map(mines:Int)
                     return a[x][y]
                 }
             }
+            if(minePositions.contains(target)) return '.'
+        }
+
+        if(!minePositions.contains(target))
+        {
+            if (a[x][y] == '.' && !minePositions.contains(target))
+            {
+                return '1'
+            }
+            else if (a[x][y].isDigit()) {
+                var f = a[x][y].digitToInt()
+                f+= 1
+                if(f > 10) {f = 9}
+                return f.digitToChar()
+            }
+            else
+            {
+                return a[x][y]
+            }
+        }
         return a[x][y]
     }
 
-    private fun getProximity(a: MutableList<MutableList<Char>>, x: Int, y: Int ) {
+    private fun getProximity(a: MutableList<MutableList<Char>>, x: Int, y: Int) {
 
-        when {
-            x == 0 && y == 0 -> // Top Left corner
-            {
-                a[x][y+1] = numCheck(a,x,y+1)
-                a[x+1][y+1] = numCheck(a,x+1,y+1)
-                a[x+1][y] = numCheck(a,x+1,y )
-            }
-
-            x == 8 && y == 0 -> // Top Right corner
-            {
-                a[x][y+1] = numCheck(a,x,y+1 )
-                a[x-1][y+1] = numCheck(a,x-1,y+1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
-            x == 0 && y == 8 -> // Bottom Left
-            {
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x+1][y-1] = numCheck(a,x+1,y-1)
-                a[x+1][y] = numCheck(a,x+1,y )
-            }
-            x == 8 && y == 8 -> // Bottom Right
-            {
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x-1][y-1] = numCheck(a,x-1,y-1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
-
-            (x == 0 && y in 1..7) -> // Left Border
-            {
-                a[x][y+1] = numCheck(a,x,y+1)
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x+1][y-1] = numCheck(a,x+1,y-1)
-                a[x+1][y+1] = numCheck(a,x+1,y+1)
-                a[x+1][y] = numCheck(a,x+1,y )
-            }
-
-            (x == 8 && y in 1..7) -> // Bottom Border
-            {
-                a[x][y+1] = numCheck(a,x,y+1 )
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x-1][y+1] = numCheck(a,x-1,y+1 )
-                a[x-1][y-1] = numCheck(a,x-1,y-1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
-            (x in 1..7 && y == 0) -> // Top Side
-            {
-                a[x][y+1] = numCheck(a,x,y+1 )
-                a[x+1][y+1] = numCheck(a,x+1,y+1)
-                a[x+1][y] = numCheck(a,x+1,y )
-                a[x-1][y+1] = numCheck(a,x-1,y+1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
-
-            x in 1..7 && y  == 8 -> // Right Side
-            {
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x+1][y-1] = numCheck(a,x+1,y-1)
-                a[x+1][y] = numCheck(a,x+1,y )
-                a[x-1][y-1] = numCheck(a,x-1,y-1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
-
-            (x in 1..7 && y in 1..7) -> // Center
-            {
-                a[x][y+1] = numCheck(a,x,y+1)
-                a[x][y-1] = numCheck(a,x,y-1 )
-                a[x+1][y-1] = numCheck(a,x+1,y-1)
-                a[x+1][y+1] = numCheck(a,x+1,y+1)
-                a[x+1][y] = numCheck(a,x+1,y )
-                a[x-1][y+1] = numCheck(a,x-1,y+1 )
-                a[x-1][y-1] = numCheck(a,x-1,y-1 )
-                a[x-1][y] = numCheck(a,x-1,y )
-            }
+        getArea(a, x, y).forEach()
+        {
+            val xCord: Int = it / 10
+            val yCord: Int = it % 10
+            println("x: $xCord y:$yCord")
+            map[xCord][yCord] = numCheck(a,xCord,yCord)
         }
     }
+    fun getArea(a: MutableList<MutableList<Char>>, x: Int, y: Int) : List<Int>
+    {
+        var xList = mutableMapOf<Int,Int>(
+            0 to x,
+            1 to x  ,
+            2 to x+1,
+            3 to x+1,
+            4 to x+1,
+            5 to x-1,
+            6 to x-1,
+            7 to x-1
+        ).filter { (key, value) -> value in 0..8 }
+        var yList = mutableMapOf<Int,Int>(
+            0 to y+1,
+            1 to y-1,
+            2 to y-1,
+            3 to y+1,
+            4 to y,
+            5 to y+1,
+            6 to y-1,
+            7 to y
+        ).filter { (key, value) -> value in 0..8 }
+        val returnList = mutableListOf<Int>()
+        repeat(xList.size)
+        {
+            if(xList.containsKey(it)&&yList.containsKey(it))
+            {
+                returnList += xList.getValue(it) * 10 + (yList.getValue(it))
+            }
+        }
+        return returnList
+
+    }
 }
+
+
 
 fun main()
 {
@@ -187,7 +181,7 @@ fun main()
         print("Set/delete mines marks (x and y coordinates): >")
         var xy = listOf<String>()
         do{
-             xy = readln().split(" ")
+            xy = readln().split(" ")
         }while (xy[0].toIntOrNull() == null || xy[1].toIntOrNull() == null)
 
         when(MineMap.mineCheck(xy[1].toInt(), xy[0].toInt()))
