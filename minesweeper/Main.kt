@@ -1,36 +1,45 @@
 package minesweeper
 
+import kotlin.math.abs
 import kotlin.random.Random
+import kotlin.system.exitProcess
 
 class Map(mines:Int)
 {
-    private val mineCount = mines
-    private val minePositions = MutableList<Int>(mineCount) {0}
+    val mineCount = mines
+    private val minePositions = MutableList<Int>(0) {0}
 
+    val playerMap:  MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'.'} }
     val map: MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'/'} }
+
     var init: Boolean = true
 
     init {
         var iter = 0
-        var lastA:Int = 0
-        var lastB:Int = 0
+        var posA = 0
+        var posB = 0
+
         for (i in mines downTo 1) {
-            var posA = 0
-            var posB = 0
             do {
                 posA = Random.nextInt(0, 9)
                 posB = Random.nextInt(0, 9)
-            }while (posA == lastA || posB == lastB)
+            }while (minePositions.contains((posA * 10) + posB))
+
+
             val coord = (posA * 10) + posB
-            minePositions[iter++] = coord
-            lastA = posA
-            lastB = posB
+            minePositions += coord
         }
         minePositions.forEach()
         {
-            var a = it/10
-            var b = it%10
-            getProximity(map, a, b)
+            val a = it/10
+            val b = it%10
+            setNumbers(map, a, b)
+        }
+        minePositions.forEach()
+        {
+            val a = it/10
+            val b = it%10
+            map[a][b] = 'X'
         }
 
         init = false
@@ -41,41 +50,19 @@ class Map(mines:Int)
     {
         var numCounter = 1
         println(" |123456789|\n-|---------|")
+        playerMap.forEach { println("${numCounter++}|${it.joinToString("")}|") }
+        println("-|---------|")
+        numCounter = 1
+        println(" |123456789|\n-|---------|")
         map.forEach { println("${numCounter++}|${it.joinToString("")}|") }
         println("-|---------|")
     }
 
-    var finalCount = 0
-    fun mineCheck(a: Int, b: Int): Int
-    {
-        val x = a-1
-        val y = b-1
-        val target = (x*10)+y
-        var done = true
-        if(minePositions.contains(target)) finalCount++
-
-        if(finalCount == mineCount)
-        {
-            return 2
-        }
-
-        if(map[x][y] == '.')
-        {
-            map[x][y] = '*'
-            return 1
-        }
-        else if(map[x][y] == '*')
-        {
-            map[x][y] = '.'
-            return 1
-        }
-        return 0
-    }
 
     private fun numCheck(a: MutableList<MutableList<Char>>, x: Int, y: Int): Char {
         println("MinePositions")
         println(minePositions.toString())
-        val target = (x*10)+y
+        val target = abs((x)*10)+y
         println("Target: $target")
 
         if(init)
@@ -89,7 +76,7 @@ class Map(mines:Int)
                 else if (a[x][y].isDigit()) {
                     var f = a[x][y].digitToInt()
                     f+= 1
-                    if(f > 10) {f = 9}
+                    if(f > 8) {f = 9}
                     return f.digitToChar()
                 }
                 else
@@ -97,7 +84,6 @@ class Map(mines:Int)
                     return a[x][y]
                 }
             }
-            if(minePositions.contains(target)) return '.'
         }
 
         if(!minePositions.contains(target))
@@ -120,7 +106,7 @@ class Map(mines:Int)
         return a[x][y]
     }
 
-    private fun getProximity(a: MutableList<MutableList<Char>>, x: Int, y: Int) {
+    private fun setNumbers(a: MutableList<MutableList<Char>>, x: Int, y: Int) {
 
         getArea(a, x, y).forEach()
         {
@@ -130,30 +116,31 @@ class Map(mines:Int)
             map[xCord][yCord] = numCheck(a,xCord,yCord)
         }
     }
-    fun getArea(a: MutableList<MutableList<Char>>, x: Int, y: Int) : List<Int>
-    {
-        var xList = mutableMapOf<Int,Int>(
-            0 to x,
+
+    private fun getArea(a: MutableList<MutableList<Char>>, x: Int, y: Int) : List<Int> {
+        val xList = mutableMapOf<Int,Int>(
+            0 to x-1,
             1 to x  ,
             2 to x+1,
-            3 to x+1,
+            3 to x-1,
             4 to x+1,
             5 to x-1,
-            6 to x-1,
-            7 to x-1
+            6 to x  ,
+            7 to x+1
         ).filter { (key, value) -> value in 0..8 }
-        var yList = mutableMapOf<Int,Int>(
+        val yList = mutableMapOf<Int,Int>(
             0 to y+1,
-            1 to y-1,
-            2 to y-1,
-            3 to y+1,
-            4 to y,
-            5 to y+1,
+            1 to y+1,
+            2 to y+1,
+            3 to y  ,
+            4 to y  ,
+            5 to y-1,
             6 to y-1,
-            7 to y
+            7 to y-1
         ).filter { (key, value) -> value in 0..8 }
         val returnList = mutableListOf<Int>()
-        repeat(xList.size)
+        val listSize: Int = if(xList.size > yList.size) xList.size else yList.size
+        repeat(8)
         {
             if(xList.containsKey(it)&&yList.containsKey(it))
             {
@@ -161,6 +148,54 @@ class Map(mines:Int)
             }
         }
         return returnList
+
+    }
+
+    private fun clearOpenSpaces(x: Int, y: Int)
+    {
+        getArea(map, x, y).forEach()
+        {
+            if(map[(it/10)][it%10].isDigit())  playerMap[(it/10)][(it%10)] = map[(it/10)][it%10]
+        }
+
+        playerMap[x][y] = '/'
+        getArea(map, x, y).filter { map[(it/10)][(it%10)] == '/' && playerMap[(it/10)][(it%10)] != '/' }.forEach()
+        {
+            playerMap[(it/10)][(it%10)] = '/'
+            clearOpenSpaces((it/10),(it%10))
+        }
+
+    }
+
+    fun playerFree(x: Int, y: Int) {
+        when{
+            map[x][y] == '/' -> {
+                clearOpenSpaces(x,y)
+            }
+            map[x][y].isDigit() -> {
+                playerMap[x][y] = map[x][y]
+            }
+            map[x][y] == 'X' -> {
+                println("You stepped on a mine and failed!")
+                exitProcess(976)
+            }
+        }
+    }
+    var finalCount = 0
+    fun playerMine(x: Int, y: Int)
+    {
+        val target = (x*10) + y
+
+        if(playerMap[x][y] != '*') {
+            playerMap[x][y] = '*'
+            if(minePositions.contains(target)) finalCount++
+        }
+        else {
+            playerMap[x][y] = '.'
+            if (minePositions.contains(target)) finalCount--
+        }
+
+
 
     }
 }
@@ -175,34 +210,31 @@ fun main()
     val MineMap = Map(readln().toInt())
     MineMap.printMap()
 
-    while(!PlayerWon)
-    {
+    while(MineMap.finalCount != MineMap.mineCount) {
 
-        print("Set/delete mines marks (x and y coordinates): >")
-        var xy = listOf<String>()
-        do{
+        print("Set/unset mines marks or claim a cell as free: >")
+        var xy = List<String>(3){""}
+        do {
             xy = readln().split(" ")
-        }while (xy[0].toIntOrNull() == null || xy[1].toIntOrNull() == null)
+        } while (xy[0].toIntOrNull() == null || xy[1].toIntOrNull() == null)
 
-        when(MineMap.mineCheck(xy[1].toInt(), xy[0].toInt()))
+        if (xy[2] == "free") {
+            MineMap.playerFree(xy[1].toInt()-1, xy[0].toInt()-1)
+            MineMap.printMap()
+        }else if (xy[2] == "mine") {
+            MineMap.playerMine(xy[1].toInt()-1, xy[0].toInt()-1)
+            MineMap.printMap()
+        }
+        if(MineMap.finalCount == MineMap.mineCount)
         {
-            2 -> {
-                println("Congratulations! You found all the mines!\n")
-                PlayerWon = true
-            }
-            1 -> {
-                println("Successfully Set a Marker")
-                MineMap.printMap()
-            }
-            0 -> {
-                println("Placed on a Number Please input on an EMPTY ('.') or MARKED ('*') Field")
-            }
+            println("Congratulations! You found all the mines!")
+            PlayerWon = true
         }
     }
-
-
-
-
-
-
 }
+
+
+
+
+
+
