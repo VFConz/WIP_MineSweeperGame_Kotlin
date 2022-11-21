@@ -12,7 +12,6 @@ class Map(mines:Int)
     val playerMap:  MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'.'} }
     val map: MutableList<MutableList<Char>> = MutableList(9) { MutableList<Char>(9) {'/'} }
 
-    var init: Boolean = true
 
     init {
         var iter = 0
@@ -41,8 +40,6 @@ class Map(mines:Int)
             val b = it%10
             map[a][b] = 'X'
         }
-
-        init = false
     }
 
 
@@ -52,21 +49,15 @@ class Map(mines:Int)
         println(" |123456789|\n-|---------|")
         playerMap.forEach { println("${numCounter++}|${it.joinToString("")}|") }
         println("-|---------|")
-        numCounter = 1
-        println(" |123456789|\n-|---------|")
-        map.forEach { println("${numCounter++}|${it.joinToString("")}|") }
-        println("-|---------|")
+
     }
 
 
     private fun numCheck(a: MutableList<MutableList<Char>>, x: Int, y: Int): Char {
-        println("MinePositions")
-        println(minePositions.toString())
-        val target = abs((x)*10)+y
-        println("Target: $target")
 
-        if(init)
-        {
+        val target = abs((x)*10)+y
+
+
             if(!minePositions.contains(target))
             {
                 if (a[x][y] == '/' && !minePositions.contains(target))
@@ -84,27 +75,12 @@ class Map(mines:Int)
                     return a[x][y]
                 }
             }
-        }
-
-        if(!minePositions.contains(target))
-        {
-            if (a[x][y] == '.' && !minePositions.contains(target))
-            {
-                return '1'
-            }
-            else if (a[x][y].isDigit()) {
-                var f = a[x][y].digitToInt()
-                f+= 1
-                if(f > 10) {f = 9}
-                return f.digitToChar()
-            }
             else
             {
                 return a[x][y]
             }
-        }
-        return a[x][y]
     }
+
 
     private fun setNumbers(a: MutableList<MutableList<Char>>, x: Int, y: Int) {
 
@@ -176,6 +152,8 @@ class Map(mines:Int)
                 playerMap[x][y] = map[x][y]
             }
             map[x][y] == 'X' -> {
+                playerMap[x][y] = map[x][y]
+                printMap()
                 println("You stepped on a mine and failed!")
                 exitProcess(976)
             }
@@ -205,7 +183,7 @@ class Map(mines:Int)
 fun main()
 {
     var PlayerWon = false
-    var PlayCount = 0
+
     print("How many mines do you want on the field? ")
     val MineMap = Map(readln().toInt())
     MineMap.printMap()
