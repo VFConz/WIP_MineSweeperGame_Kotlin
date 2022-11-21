@@ -1,4 +1,4 @@
-#Kotlin Minesweeper Project Release
+# Kotlin Minesweeper Project Release
 
 Featured in the Kotlin Basics Course on HyperSkill 
 
